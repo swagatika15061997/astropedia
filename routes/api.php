@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+
+Route::group(['namespace' => 'Api\Customer', 'prefix' => 'customer'], function () {
+    Route::post('/register', 'AuthController@register');
+    Route::post('/login', 'AuthController@login');
+    Route::post('/verify-otp', 'AuthController@verifyOtp');
+    Route::middleware('auth:api')->group(function () {
+      Route::get('/profile-info', 'ProfileController@profile_info');  
+    });
+
 });

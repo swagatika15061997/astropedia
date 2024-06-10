@@ -1,7 +1,6 @@
+
 @extends('layouts.frontend.app')
-
 @section('title','Profile')
-
 @push('css_or_js')
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 <style>

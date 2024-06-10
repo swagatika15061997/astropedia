@@ -15,6 +15,15 @@ use Auth;
 
 class CustomerController extends Controller
 { 
+    public function getNotifications()
+    {
+        $notifications = Auth::user()->schedullingNotifications()->where('seen', false)->get();
+
+        // Mark notifications as seen
+        Auth::user()->schedullingNotifications()->where('seen', false)->update(['seen' => true]);
+
+        return response()->json($notifications);
+    }
     public function booking()
     {
         $bookings = Booking::where('customer_id',Auth::user()->id)->get();

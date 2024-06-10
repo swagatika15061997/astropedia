@@ -190,6 +190,39 @@
         }
     });
 </script>
+<!-- Include Axios and SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function showNotification(message) {
+                Swal.fire({
+                    title: 'Notification',
+                    text: message,
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+            }
+
+            function fetchNotifications() {
+                axios.get('/schedulling-notifications')
+                    .then(function(response) {
+                        response.data.forEach(notification => {
+                            showNotification(notification.message);
+                        });
+                    })
+                    .catch(function(error) {
+                        console.error('Error fetching notifications:', error);
+                    });
+            }
+
+            // Poll the server every 1 minute (60000 ms)
+            setInterval(fetchNotifications, 60000);
+
+            // Fetch notifications on page load
+            fetchNotifications();
+        });
+    </script>
 </body>
 </html>

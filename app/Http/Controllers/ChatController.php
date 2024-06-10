@@ -5,7 +5,9 @@ use App\Models\Astrologer;
 use App\Models\WalletTransaction;
 use App\Models\ChatRequest;
 use App\Models\Chat;
+use App\Models\Message;
 use App\Events\ChatRequestSent;
+use App\Events\MessageEvent;
 use App\Events\ChatRequestUser;
 use App\Notifications\ChatNotification;
 use Illuminate\Http\Request;
@@ -175,23 +177,55 @@ class ChatController extends Controller
              return view('customer.chat'); 
         
     }
-    public function chat($id)
+    public function loadchats(Request $request)
+    {
+        try{
+             $chats = Message::where(function($query) use ($request) {
+               $query->where('sender_id','=', $request->sender_id)
+               ->orWhere('sender_id', '=', $request->receiver_id);
+             })->where(function($query) use ($request) {
+                $query->where('receiver_id','=',$request->sender_id)
+                ->orWhere('receiver_id', '=', $request->receiver_id);
+              })->get();
+             return response()->json(['success' => true, 'data' => $chats]);
+        }catch(\Exception $e){
+            return response()->json(['success' => false, 'msg' => $e->getMessage()]);
+        }
+
+    }
+    public function savechat(Request $request)
+    {
+        try{
+            $chat = Message::create([
+                'sender_id' => $request->sender_id,
+                'receiver_id' => $request->receiver_id,
+                'message' => $request->message
+            ]);
+            event(new MessageEvent($chat));
+             return response()->json(['success' => true, 'data' => $chat]);
+        }catch(\Exception $e){
+            return response()->json(['success' => false, 'msg' => $e->getMessage()]);
+        }
+
+    }
+
+    public function chat()
     {
 
-            $chattings = Chat::join('astrologers', 'astrologers.id', '=', 'chats.astrologer_id')
-                ->select('chats.*', 'astrologers.name', 'astrologers.image')
-                ->where('chats.user_id', Auth::user()->id)
-                ->where('astrologer_id', $id)
-                ->get();
-            $unique_astrologers = Chat::join('astrologers', 'astrologers.id', '=', 'chats.astrologer_id')
-                ->select('chats.*', 'astrologers.name', 'astrologers.image')
-                ->where('chats.user_id', Auth::user()->id)
-                ->orderBy('chats.created_at', 'desc')
-                ->get()
-                ->unique('astrologer_id');
-                return view('chat',compact('chattings','unique_astrologers'));           
+            // $chattings = Chat::join('astrologers', 'astrologers.id', '=', 'chats.astrologer_id')
+            //     ->select('chats.*', 'astrologers.name', 'astrologers.image')
+            //     ->where('chats.user_id', Auth::user()->id)
+            //     ->where('astrologer_id', $id)
+            //     ->get();
+            // $unique_astrologers = Chat::join('astrologers', 'astrologers.id', '=', 'chats.astrologer_id')
+            //     ->select('chats.*', 'astrologers.name', 'astrologers.image')
+            //     ->where('chats.user_id', Auth::user()->id)
+            //     ->orderBy('chats.created_at', 'desc')
+            //     ->get()
+            //     ->unique('astrologer_id');
+            //     $astrologer = Astrologer::find($id);
+                return view('chat');           
              
-             return view('chat'); 
         
     }
 }

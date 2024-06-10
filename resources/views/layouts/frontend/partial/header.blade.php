@@ -242,7 +242,6 @@
                                         </li> -->
                                         <li><a href="{{route('shop')}}" class="{{Request::is('shop')?'active':''}}">shop</a></li>
                                         <li><a href="{{route('blog')}}" class="{{Request::is('blog')?'active':''}}">blog</a></li>
-                                        <li><a href="{{route('astrologer')}}" class="{{Request::is('astrologer')?'active':''}}">astrologer</a></li>
                                         <li><a href="{{route('contact')}}" class="{{Request::is('contact')?'active':''}}">contact</a></li>
                                         
                                     </ul>

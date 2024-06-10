@@ -11,7 +11,6 @@ use App\Http\Controllers\CustomerController as CustomersController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Astrologer\AstrologerController;
 use App\Http\Controllers\Astrologer\Auth\LoginController;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -26,6 +25,11 @@ use App\Http\Controllers\Astrologer\Auth\LoginController;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/test', function () {
+    event(new App\Events\WebappfixTest());
+    dd('fired ...');
+});
+
 Route::get('/about-us', [WebController::class, 'about_us'])->name('about-us');
 Route::get('/blog', [WebController::class, 'blog'])->name('blog');
 Route::get('/contact', [WebController::class, 'contact'])->name('contact');
@@ -69,6 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/schedulling-notifications', [CustomersController::class, 'getNotifications']);
     Route::get('cart', [CartController::class, 'cart'])->name('cart');
     Route::patch('update-cart', [CartController::class, 'update'])->name('update.cart');
     Route::get('remove-cart', [CartController::class, 'remove_cart'])->name('remove.cart');
@@ -103,8 +108,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/store-wallet-rechage', 'ChatController@store_wallet_recharge')->name('store-wallet-recharge');
     Route::get('/success', 'ChatController@success')->name('success');
     Route::get('/chat-history', 'ChatController@chat_history')->name('chat-history');
-    Route::get('/chat/{id}', 'ChatController@chat')->name('chat');
+    // Route::get('/chat/{id}', 'ChatController@chat')->name('chat');
+    Route::get('/chat', 'ChatController@chat')->name('chat');
+
     Route::get('/notify', 'ChatController@notify')->name('notify');
+    Route::post('/save-chat', 'ChatController@savechat');
+    Route::post('/load-chats', 'ChatController@loadchats');
 
 });
 
