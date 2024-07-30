@@ -56,4 +56,16 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(SchedullingNotification::class);
     }
+    // protected static function booted()
+    // {
+    //     static::updated(function ($user) {
+    //         Event::dispatch(new UserStatusUpdated($user->id, $user->is_online ? 'online' : 'offline'));
+    //     });
+    // }
+
+    // public function setIsOnlineAttribute($value)
+    // {
+    //     $this->attributes['is_online'] = $value;
+    //     $this->save();
+    // }
 }

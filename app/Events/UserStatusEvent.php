@@ -17,20 +17,29 @@ class UserStatusEvent implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct()
-    {
-        //
-    }
+    
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
+     public $id;
+     public $type;
+ 
+     public function __construct($id, $type)
+     {
+         $this->id = $id;
+         $this->type = $type;
+     }
+
     public function broadcastOn(): array
     {
         return [
             new PresenceChannel('status-update'),
         ];
     }
+    public function broadcastWith()
+    {
+        return [
+            'id' => $this->id,
+            'type' => $this->type,
+        ];
+    }
+
 }

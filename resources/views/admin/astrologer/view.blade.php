@@ -145,6 +145,18 @@
                                </div>
                            </div>
                                 <!-- end modal -->
+                                <div class="card-body p-4 border-top border-top-dashed">
+                                    <h6 class="text-muted text-uppercase fw-semibold mb-4">Commission</h6>
+                                    <form action="{{ route('astrologer.commission', $astrologer->id) }}" method="POST">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" name="commission" value="{{$astrologer->commission}}">
+                                        </div>
+                                        <div class="text-end">
+                                            <button type="submit" class="btn btn-primary">Save</button>
+                                        </div>
+                                    </form>
+                                </div>
                                 <div class="card-body border-top border-top-dashed p-4">
                                     <div>
                                         <h6 class="text-muted text-uppercase fw-semibold mb-4">Customer Reviews</h6>

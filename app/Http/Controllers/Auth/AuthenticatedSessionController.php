@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use App\Models\Cart;
+use App\Events\UserStatusEvent;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -30,6 +31,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
         $this->mergeSessionCartWithUserCart();
+        // event(new UserStatusEvent(auth()->id(), 'user'));
         return redirect()->intended(RouteServiceProvider::HOME)->with('info', 'Welcome to astropedia!');
     }
 
@@ -76,7 +78,18 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
-
+        
         return redirect('/')->with('info', 'Welcome back soon!');
+    }
+    protected function authenticated()
+    {
+        $user = Auth::user();
+        $user->is_online = true;
+    }
+
+    protected function loggedOut()
+    {
+        $user = Auth::user();
+        $user->is_online = false;
     }
 }

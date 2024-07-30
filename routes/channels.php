@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Models\Astrologer;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -13,18 +15,19 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
+Broadcast::channel('App.Models.Astrologer.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
+
+
 Broadcast::channel('status-update', function ($user) {
-    return $user;
-});
+    return [
+        'id' => get_class($user) == 'App\Models\Astrologer' ? $user->id  : 'astro_'.$user->id,
+        'type' => get_class($user) == 'App\Models\Astrologer' ? 'astrologer' : 'user',
+    ];
+}, ['guards' => ['web', 'astrologer']]);
+
+
 Broadcast::channel('broadcast-message', function ($user) {
     return $user;
-});
-Broadcast::channel('astrologer-status-update', function ($astrologer) {
-    return $astrologer;
-});
-Broadcast::channel('astrologer-chat.{astrologerId}.{userId}', function ($user, $astrologerId, $userId) {
-    return (int) $user->id === (int) $userId;
-});
+}, ['guards' => ['web', 'astrologer']]);

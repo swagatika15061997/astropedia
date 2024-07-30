@@ -46,8 +46,7 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user = User::where('email', $request->email)->orWhere('phone', $request->phone)->first();
-
+        $user = User::where('email', $request->email)->first();
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
@@ -71,7 +70,7 @@ class AuthController extends Controller
             // Integrate SMS sending service here to send OTP to phone
         }
 
-        return response()->json(['message' => 'OTP sent'], 200);
+        return response()->json(['message' => 'OTP sent','otp' =>$otp ], 200);
     }
 
     public function verifyOtp(Request $request)

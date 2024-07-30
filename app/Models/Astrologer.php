@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Events\AstrologerStatusEvent;
+use Illuminate\Support\Facades\Event;
 
 class Astrologer extends Authenticatable
 {
@@ -23,6 +25,7 @@ class Astrologer extends Authenticatable
         'email',
         'password',
         'is_active',
+        'is_online',
     ];
 
     /**
@@ -52,6 +55,20 @@ class Astrologer extends Authenticatable
     {
         return $this->belongsTo(Skill::class,'skill');
     }
+    // protected static function booted()
+    // {
+    //     static::updated(function ($astrologer) {
+    //         if ($astrologer->isDirty('is_online')) {
+    //             Event::dispatch(new AstrologerStatusEvent($astrologer->id, $astrologer->is_online ? 'online' : 'offline'));
+    //         }
+    //     });
+    // }
+
+    // public function setIsOnlineAttribute($value)
+    // {
+    //     $this->attributes['is_online'] = $value;
+    //     $this->save();
+    // }
     
     
 }

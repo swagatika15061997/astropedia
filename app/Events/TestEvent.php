@@ -10,29 +10,28 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class AstrologerStatusEvent implements ShouldBroadcast
+class TestEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * Create a new event instance.
      */
-    public $astrologerId;
-    public $status;
-
-    public function __construct($astrologerId, $status)
+    public $data;
+    public function __construct($data)
     {
-        $this->astrologerId = $astrologerId;
-        $this->status = $status;
+        $this->data = $data;
     }
 
-    public function broadcastOn()
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
     {
-        return new PresenceChannel('status-update');
-    }
-
-    public function broadcastWith()
-    {
-        return ['id' => $this->astrologerId, 'status' => $this->status, 'type' => 'astrologer'];
+        return [
+            new PrivateChannel('one-to-one'),
+        ];
     }
 }

@@ -116,8 +116,126 @@
     border-top: 1px dotted #797979;
 }
 .navbar-tool-text {
-          color: #fff;
-        }
+    color: #fff;
+}
+.notifications {
+    margin-left: 14px;
+}
+.notifications .icon_wrap {
+    font-size: 28px;
+}
+.notifications{
+  position: relative;
+}
+.notification_dd{
+  position: absolute;
+  top: 48px;
+  right: -15px;
+  user-select: none;
+  background: #fff;
+  border: 1px solid #c7d8e2;
+  width: 350px;
+  height: auto;
+  display: none;
+  border-radius: 3px;
+  box-shadow: 10px 10px 35px rgba(0,0,0,0.125),
+              -10px -10px 35px rgba(0,0,0,0.125);
+  z-index: 999;
+}
+.notification_dd:before{
+    content: "";
+    position: absolute;
+    top: -20px;
+    right: 15px;
+    border: 10px solid;
+    border-color: transparent transparent #fff transparent;
+}
+
+.notification_dd li {
+    border-bottom: 1px solid #f1f2f4;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+}
+
+.notification_dd li .notify_icon{
+  display: flex;
+}
+
+.notification_dd li .notify_icon .icon{
+  display: inline-block;
+  /* background: url('https://i.imgur.com/MVJNkqW.png') no-repeat 0 0; */
+	width: 40px;
+	height: 42px;
+}
+
+.notification_dd li.baskin_robbins .notify_icon .icon{
+  background-position: 0 -43px;
+}
+
+.notification_dd li.mcd .notify_icon .icon{
+  background-position: 0 -86px;
+}
+
+.notification_dd li.pizzahut .notify_icon .icon{
+  background-position: 0 -129px;
+}
+
+.notification_dd li.kfc .notify_icon .icon{
+  background-position: 0 -178px;
+}
+
+.notification_dd li .notify_data{
+  margin: 0 15px;
+  width: 185px;
+}
+
+.notification_dd li .notify_data .title{
+  color: #000;
+  font-weight: 600;
+}
+
+.notification_dd li .notify_data .sub_title{
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 5px;
+}
+
+.notification_dd li .notify_status p{
+  font-size: 12px;
+}
+
+.notification_dd li.success .notify_status p{
+  color: #47da89;
+}
+
+.notification_dd li.failed .notify_status p{
+  color: #fb0001;
+}
+
+.notification_dd li.show_all{
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.notification_dd li.show_all p{
+  font-weight: 700;
+  color: #3b80f9;
+  cursor: pointer;
+}
+
+.notification_dd li.show_all p:hover{
+  text-decoration: underline;
+}
+.notifications.active .icon_wrap{
+  color: #3b80f9;
+}
+.notification_dd.active {
+    display: block;
+}
 </style>
    <section class="as_header_wrapper">
             <div class="as_info_detail">
@@ -164,7 +282,18 @@
                                               
                                         </a>
                                 </div>
+                                @if(Auth::check())
                                 
+                                <div class="notifications">
+                                  <div class="icon_wrap">
+                                    <i class="fas fa-comment-alt" style="color: #fed500;"></i>
+                                  </div>
+                        <div id="notification-container">
+
+                                  @include('layouts.frontend.partial.chat-request')
+</div>  
+                                </div>
+                                @endif
                                 @if(Auth::check())
                                 <div class="dropdown">
                                      <a class="navbar-tool ml-3 dropbtn" type="button" data-toggle="dropdown" aria-haspopup="true"
@@ -342,3 +471,15 @@
                 </div>
             </div>
         </section>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
+        <script>
+
+
+$(".notifications .icon_wrap").click(function() {
+    $(".notification_dd").toggleClass("active");
+
+});
+
+
+
+        </script>

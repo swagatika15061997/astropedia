@@ -25,6 +25,7 @@ class SettingController extends Controller
             'header_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'footer_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'commission' => 'required|integer'
         ]);
 
         // Update settings
@@ -33,6 +34,7 @@ class SettingController extends Controller
         $settings->phone = $request->input('phone');
         $settings->email = $request->input('email');
         $settings->company_address = $request->input('company_address');
+        $settings->commission = $request->input('commission');
 
         // Handle logo, footer logo, and favicon uploads
         if ($request->hasFile('header_logo')) {

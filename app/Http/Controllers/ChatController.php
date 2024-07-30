@@ -85,6 +85,53 @@ class ChatController extends Controller
 
 
     }
+    public function endChat(Request $request)
+    {
+        $chatRequest = ChatRequest::where('user_id', Auth::id())
+                                  ->where('status', 'Progress')
+                                  ->first();
+
+        if ($chatRequest) {
+            $totalMinutes = $request->total_minutes;
+            $astrologer = $chatRequest->astrologer;
+
+            // Update user's free minutes and wallet balance
+            if (Auth::user()->free_min >= $totalMinutes) {
+                Auth::user()->free_min -= $totalMinutes;
+            } 
+
+            Auth::user()->save();
+
+            // Update chat request details
+            $chatRequest->totalMin = $totalMinutes;
+            $chatRequest->chatRate = $astrologer->charge;
+            $chatRequest->status = 'completed';
+            $chatRequest->save();
+
+            return response()->json(['status' => 'success', 'message' => 'Chat ended successfully.']);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'No ongoing chat found.']);
+    }
+    public function chatPage($chatRequestId)
+    {
+        $chatRequest = ChatRequest::find($chatRequestId);
+        $chatRequest->status = 'Progress';
+        $chatRequest->save();
+
+            return view('chat-page', ['chatRequest' => $chatRequest]);
+    }
+    public function updateChatRequestStatus(Request $request, $id)
+{
+    $chatRequest = ChatRequest::find($id);
+    if ($chatRequest) {
+        $chatRequest->status = $request->status;
+        $chatRequest->save();
+        return response()->json(['status' => 'success', 'message' => 'Chat request status updated.']);
+    } else {
+        return response()->json(['status' => 'error', 'message' => 'Chat request not found.']);
+    }
+}
     public function wallet_recharge()
     {
         return view('wallet-recharge');
@@ -177,37 +224,52 @@ class ChatController extends Controller
              return view('customer.chat'); 
         
     }
+
     public function loadchats(Request $request)
-    {
-        try{
-             $chats = Message::where(function($query) use ($request) {
-               $query->where('sender_id','=', $request->sender_id)
-               ->orWhere('sender_id', '=', $request->receiver_id);
-             })->where(function($query) use ($request) {
-                $query->where('receiver_id','=',$request->sender_id)
-                ->orWhere('receiver_id', '=', $request->receiver_id);
-              })->get();
-             return response()->json(['success' => true, 'data' => $chats]);
-        }catch(\Exception $e){
-            return response()->json(['success' => false, 'msg' => $e->getMessage()]);
-        }
-
+{
+    try {
+        $chats = Message::where(function($query) use ($request) {
+            $query->where(function($query) use ($request) {
+                $query->where('sender_id', $request->sender_id)
+                      ->where('sender_type', $request->sender_type);
+            })->orWhere(function($query) use ($request) {
+                $query->where('sender_id', $request->receiver_id)
+                      ->where('sender_type', $request->receiver_type);
+            });
+        })->where(function($query) use ($request) {
+            $query->where(function($query) use ($request) {
+                $query->where('receiver_id', $request->receiver_id)
+                      ->where('receiver_type', $request->receiver_type);
+            })->orWhere(function($query) use ($request) {
+                $query->where('receiver_id', $request->sender_id)
+                      ->where('receiver_type', $request->sender_type);
+            });
+        })->get();
+        
+        return response()->json(['success' => true, 'data' => $chats]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'msg' => $e->getMessage()]);
     }
-    public function savechat(Request $request)
-    {
-        try{
-            $chat = Message::create([
-                'sender_id' => $request->sender_id,
-                'receiver_id' => $request->receiver_id,
-                'message' => $request->message
-            ]);
-            event(new MessageEvent($chat));
-             return response()->json(['success' => true, 'data' => $chat]);
-        }catch(\Exception $e){
-            return response()->json(['success' => false, 'msg' => $e->getMessage()]);
-        }
+}
 
+public function savechat(Request $request)
+{
+    try {
+        $chat = Message::create([
+            'sender_id' => $request->sender_id,
+            'sender_type' => $request->sender_type,
+            'receiver_id' => $request->receiver_id,
+            'receiver_type' => $request->receiver_type,
+            'message' => $request->message
+        ]);
+        event(new MessageEvent($chat));
+        
+        return response()->json(['success' => true, 'data' => $chat]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'msg' => $e->getMessage()]);
     }
+}
+
 
     public function chat()
     {

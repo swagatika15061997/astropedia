@@ -33,9 +33,6 @@
                         </div><!-- end card header -->
                         <div class="card-body">
                             <div class="live-preview">
-                              @if(session('success'))
-                                 <div class="alert alert-success">{{ session('success') }}</div>
-                              @endif
                                 <form action="{{route('setting_save')}}" method="post" enctype="multipart/form-data">
                                     @csrf
                                     @method('PUT')
@@ -93,6 +90,12 @@
                                             </div>
                                         </div>
                                         <!--end col-->
+                                        <div class="col-xxl-12 col-md-12">
+                                            <div>
+                                                <label for="labelInput" class="form-label">Commission</label>
+                                                <input type="text" class="form-control" id="labelInput" name="commission" placeholder="Enter commission percentage" value="{{ old('commission', $settings->commission) }}">
+                                            </div>
+                                        </div>
                                         <div class="col-lg-12">
                                                 <div class="hstack gap-2 justify-content-end">
                                                     <button type="submit" class="btn btn-primary">Update</button>

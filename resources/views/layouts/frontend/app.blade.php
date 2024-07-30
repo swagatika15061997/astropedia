@@ -17,7 +17,40 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="shortcut icon" href="{{asset('frontend/assets/images/favicon.png')}}" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" rel="stylesheet">
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if(Auth::check())
+    <script>
 
+    Pusher.logToConsole = true;
+
+    var pusher = new Pusher('8f11cb635d4cb5037966', {
+      cluster: 'ap2'
+    });
+
+    var channel = pusher.subscribe('popup-channel');
+    channel.bind('user-registered_{{auth()->user()->id}}', function(data) {
+      // alert(JSON.stringify(data));
+      var audio = new Audio("{{ asset('backend/assets/sound/notification.mp3') }}");
+      // Play the audio
+      audio.onerror = function() {
+        console.error("Audio file could not be loaded.");
+      };
+
+      // Play the audio
+      audio.play().catch(function(error) {
+        console.error("Audio playback failed: ", error);
+      });
+
+      // Insert the dynamic content
+      document.getElementById('modalBodyContent').innerText = data.name + ' updated chat status.';
+      
+      // Show the modal
+      $('#chatRequestModal').modal('show');
+      $('#notification-container').load(location.href + ' #notification-container');
+    });
+  </script>
+  @endif
 </head>
 <body>
     <div class="as_loader">
@@ -32,7 +65,23 @@
         
     </div>
     
-
+    <div class="modal fade" id="chatRequestModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">New Chat Request</h5>
+         
+        </div>
+        <div class="modal-body" id="modalBodyContent">
+          <!-- Dynamic content will be inserted here -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-dismiss="modal"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+        </div>
     <!-- Modal -->
     <div id="as_login" class="modal fade" role="dialog">
         <div class="modal-dialog">

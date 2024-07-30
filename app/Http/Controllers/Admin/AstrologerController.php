@@ -12,6 +12,11 @@ class AstrologerController extends Controller
         $astrologers = Astrologer::orderBy('created_at', 'desc')->get();
         return view('admin.astrologer.list', compact('astrologers'));
     }
+    public function details(Request $request,$id)
+    {  
+        $astrologers = Astrologer::find($id);
+        return view('admin.astrologer.list', compact('astrologers'));
+    }
     public function destroy($id)
     {
      $astrologer = Astrologer::findOrFail($id);
@@ -36,6 +41,17 @@ class AstrologerController extends Controller
        }
        $astrologer->save();
        return redirect()->back()->with('success', $message);
+    }
+    public function commission(Request $request,$id)
+    {
+        $request->validate([
+            'commission' => 'numeric'
+        ]);
+        $astrologer = Astrologer::find($id);
+        $astrologer->commission = $request->commission;
+        $astrologer->save();
+        return redirect()->back()->with('success', 'Commission updated successfully.');
+
     }
 
 }

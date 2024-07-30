@@ -101,6 +101,7 @@
                             @if($walletBalance >= $requiredBalance)
                                 <a href="{{ route('chat-request-add', $astrologer->id) }}">
                                     <button type="button" class="btn btn-outline-warning">Chat</button>
+                                    
                                 </a>
                             @else
                               
@@ -186,33 +187,9 @@
     ?>
     
     <div class="row">
-        <div class="col-4">
-            @if (count($users) > 0)
-                <div class="list-group" id="list-tab" role="tablist">
-                    @foreach ($users as $user)
-                        <a class="list-group-item list-group-item-action user-list-item" id="list-profile-list" data-id="{{ $user->id }}" data-bs-toggle="list" href="#list-{{ $user->id }}" role="tab" aria-controls="list-profile">{{ $user->name }}
-                            <b><sup id="{{ $user->id }}-status" class="offline-status">Offline</sup></b>
-                        </a>
-                    @endforeach
-                </div>
-            @else
-                <p>No user found</p>
-            @endif
-        </div>
+
         
-        <div class="col-4">
-            @if (count($astrologers) > 0)
-                <div class="list-group" id="astrologer-list-tab" role="tablist">
-                    @foreach ($astrologers as $astrologer)
-                        <a class="list-group-item list-group-item-action astrologer-list-item" id="list-profile-list" data-id="{{ $astrologer->id }}" data-bs-toggle="list" href="#list-{{ $astrologer->id }}" role="tab" aria-controls="list-profile">{{ $astrologer->name }}
-                            <b><sup id="{{ $astrologer->id }}-status" class="offline-status">Offline</sup></b>
-                        </a>
-                    @endforeach
-                </div>
-            @else
-                <p>No astrologer found</p>
-            @endif
-        </div>
+
 
         <div class="col-4">
             @foreach ($chatRequests as $chatRequest)
@@ -237,7 +214,10 @@
                                         <button type="submit" class="btn btn-danger">Cancel</button>
                                     </form>
                                 @elseif($chatRequest->status == 'accepted')
-                                    <a href="{{ route('chat', $chatRequest->astrologer_id) }}"><button type="button" class="btn btn-success">Accepted</button></a>
+                                    <a href="{{ route('chat', $chatRequest->id) }}">
+                                        <button type="button" class="btn btn-success">Start Chat</button>
+                                    </a>
+                                    <!-- <a href="{{ route('chat', $chatRequest->astrologer_id) }}"><button type="button" class="btn btn-success">Accepted</button></a> -->
                                 @endif
                             </div>
                         </div>
@@ -247,125 +227,101 @@
         </div>
     </div>
 @endif
+<!-- resources/views/partials/chat-modal.blade.php -->
+<div id="chatModal" class="modal fade" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chatModalLabel">Chat with Astrologer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button id="endChatButton" class="btn btn-danger">End Chat</button>
+            </div>
+            <div class="modal-body">
+                <!-- Chat content here -->
+                <div id="chatContent"></div>
+            </div>
+            <div class="modal-footer">
+                <span id="timer"></span>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
-    var sender_id = @json(auth()->user()->id);
-    var receiver_id;
+    let freeMinutes = {{ Auth::user()->free_min }};
+    let timer = freeMinutes * 60; // Convert free minutes to seconds
+    let chatInterval;
+    let totalMinutes = 0;
 
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
-    $(document).ready(function() {
-        $('.user-list-item, .astrologer-list-item').click(function() {
-            var getUserId = $(this).attr('data-id');
-            receiver_id = getUserId;
-            console.log(receiver_id);
-
-            // Clear chat container for the selected user/astrologer
-            $('#chat-container-' + receiver_id).html('');
-            loadOldChats();
-        });
-
-        $(document).on('submit', '.chat-form', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            var message = form.find('.message-input').val();
-
-            $.ajax({
-                url: "/save-chat",
-                type: "POST",
-                data: {
-                    sender_id: sender_id,
-                    receiver_id: receiver_id,
-                    message: message,
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(res) {
-                    if (res.success) {
-                        form.find('.message-input').val('');
-                        let chat = res.data.message;
-                        let html = `<div class="current-user-chat">
-                                        <h5>` + chat + `</h5>
-                                    </div>`;
-                        $('#chat-container-' + receiver_id).append(html);
-                    } else {
-                        alert(res.msg);
-                    }
+    function startTimer() {
+        chatInterval = setInterval(() => {
+            if (timer > 0) {
+                timer--;
+                if (timer % 60 === 0) {
+                    totalMinutes++;
                 }
-            });
-        });
-    });
+                document.getElementById('timer').textContent = formatTime(timer);
+            } else {
+                clearInterval(chatInterval);
+                endChat();
+            }
+        }, 1000);
+    }
 
-    function loadOldChats() {
-        $.ajax({
-            url: "/load-chats",
-            type: "POST",
-            data: { sender_id: sender_id, receiver_id: receiver_id },
-            success: function(res) {
-                if (res.success) {
-                    let chats = res.data;
-                    let html = '';
-                    for (let i = 0; i < chats.length; i++) {
-                        let addClass = '';
-                        if (chats[i].sender_id == sender_id) {
-                            addClass = 'current-user-chat';
-                        } else {
-                            addClass = 'distance-user-chat';
-                        }
-                        html += `<div class="` + addClass + `">
-                                    <h5>` + chats[i].message + `</h5>
-                                </div>`;
-                    }
-                    $('#chat-container-' + receiver_id).html(html);
-                }
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    }
+
+    function endChat() {
+        fetch('{{ route("chat.end") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ total_minutes: totalMinutes, astrologer_id: {{ $astrologer->id }} })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                var chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
+                chatModal.hide();
+                alert(data.message);
+            } else {
+                alert(data.message);
             }
         });
     }
 
-    Echo.join('status-update')
-        .here((users) => {
-            for (let x = 0; x < users.length; x++) {
-                if (sender_id != users[x]['id']) {
-                    $('#' + users[x]['id'] + '-status').removeClass('offline-status');
-                    $('#' + users[x]['id'] + '-status').addClass('online-status');
-                    $('#' + users[x]['id'] + '-status').text('Online');
+    document.getElementById('endChatButton').addEventListener('click', endChat);
+
+    $('#chatModal').on('shown.bs.modal', function (e) {
+            let chatRequestId = $(e.relatedTarget).data('chat-request-id');
+            updateChatRequestStatus(chatRequestId);
+            startTimer();
+        });
+
+        function updateChatRequestStatus(chatRequestId) {
+            $.ajax({
+                url: '/update-chat-request-status',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    chat_request_id: chatRequestId
+                },
+                success: function(response) {
+                    console.log(response);
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseText);
                 }
-            }
-        })
-        .joining((user) => {
-            $('#' + user.id + '-status').removeClass('offline-status');
-            $('#' + user.id + '-status').addClass('online-status');
-            $('#' + user.id + '-status').text('Online');
-        })
-        .leaving((user) => {
-            $('#' + user.id + '-status').removeClass('online-status');
-            $('#' + user.id + '-status').addClass('offline-status');
-            $('#' + user.id + '-status').text('Offline');
-        });
-
-    Echo.private('broadcast-message')
-        .listen('.getChatMessage', (data) => {
-            if (sender_id == data.chat.receiver_id && receiver_id == data.chat.sender_id) {
-                let html = `<div class="distance-user-chat">
-                                <h5>` + data.chat.message + `</h5>
-                            </div>`;
-                $('#chat-container-' + receiver_id).append(html);
-            }
-        });
-
-    Echo.private('astrologerStatusUpdate')
-        .listen('.astrologerStatusUpdate', (data) => {
-            if (data.type == 'astrologer') {
-                $('#' + data.id + '-status').removeClass('offline-status');
-                $('#' + data.id + '-status').addClass('online-status');
-                $('#' + data.id + '-status').text('Online');
-            }
-        });
+            });
+        }
 </script>
+
 
 @endsection

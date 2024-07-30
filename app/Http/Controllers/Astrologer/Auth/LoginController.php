@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Hash;
 use Auth;
 use App\Models\Astrologer;
+use App\Events\UserStatusEvent;
+
 
 class LoginController extends Controller
 {
@@ -68,6 +70,10 @@ class LoginController extends Controller
         ];
         if(Auth::guard('astrologer')->attempt($data)) {
             if(Auth::guard('astrologer')->user()->status == 'approved'){
+                $astrologer = Auth::guard('astrologer')->user();
+                $astrologer->is_online = true;
+                $astrologer->save();
+                // event(new UserStatusEvent(auth('astrologer')->id(), 'astrologer'));
                 return redirect()->route('astrologer.dashboard')->with('success','Login Successfull');
             }
             else{
@@ -80,7 +86,11 @@ class LoginController extends Controller
     }
     public function logout()
     {
+        $astrologer = Auth::guard('astrologer')->user();
+        $astrologer->is_online = false;
+        $astrologer->save();
         Auth::guard('astrologer')->logout();
         return redirect()->route('astrologer.login')->with('success','Logout Successfully');
     }
+    
 }

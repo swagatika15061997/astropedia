@@ -21,7 +21,15 @@ use App\Http\Controllers\Astrologer\Auth\LoginController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+Route::get('/test-email', function () {
+    Mail::raw('Test email content', function ($message) {
+        $message->to('recipient@example.com');
+        $message->subject('Testing Email');
+        $message->from('your-email@example.com', 'Your Name');
+    });
 
+    return 'Test email sent';
+});
 Route::get('/', function () {
     return view('welcome');
 });
@@ -109,11 +117,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/success', 'ChatController@success')->name('success');
     Route::get('/chat-history', 'ChatController@chat_history')->name('chat-history');
     // Route::get('/chat/{id}', 'ChatController@chat')->name('chat');
-    Route::get('/chat', 'ChatController@chat')->name('chat');
 
     Route::get('/notify', 'ChatController@notify')->name('notify');
     Route::post('/save-chat', 'ChatController@savechat');
     Route::post('/load-chats', 'ChatController@loadchats');
+    Route::post('/chat/end', 'ChatController@endChat')->name('chat.end');
+    Route::get('/chat/{chatRequest}', 'ChatController@chatPage')->name('chat');
+    // Route::post('/update-chat-request-status', 'ChatController@updateChatRequestStatus')->name('update.chat.request.status');
+
+    Route::post('/chat-request-update/{id}', 'ChatController@updateChatRequestStatus')->name('update.chat.request.statu');
+});
+// Route::get('/chat', 'ChatController@chat')->name('chat');
+
+Route::middleware(['auth:astrologer', 'auth:web'])->group(function () {
 
 });
 
@@ -169,6 +185,7 @@ Route::middleware('admin')->prefix('admin')->group(function () {
         Route::post('status-update/{id}', 'AstrologerController@status_update')->name('status-update');
         Route::delete('destroy/{id}', 'AstrologerController@destroy')->name('destroy');
         Route::get('view/{id}', 'AstrologerController@view')->name('view');
+        Route::post('commission/{id}', 'AstrologerController@commission')->name('commission');
         
     });
     Route::group(['namespace' => 'Admin','prefix' => 'order', 'as' => 'order.'], function () {
@@ -229,7 +246,9 @@ Route::group(['namespace' => 'Astrologer','prefix' => 'astrologer', 'as' => 'ast
       Route::post('/register-submit', [LoginController::class, 'register_submit'])->name('register_submit');
       Route::post('/login-submit', [LoginController::class, 'login_submit'])->name('login_submit');
       Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
+
     Route::middleware('astrologer')->group(function () {
+        Route::get('/dashboard', [AstrologerController::class, 'dashboard'])->name('dashboard');
         Route::group(['prefix' => 'profile', 'as' => 'profile.'], function () {
             Route::get('view', [AstrologerController::class, 'view'])->name('view');
             Route::get('update/{id}', [AstrologerController::class, 'edit'])->name('update');
@@ -237,7 +256,10 @@ Route::group(['namespace' => 'Astrologer','prefix' => 'astrologer', 'as' => 'ast
             Route::post('settings-password', [AstrologerController::class,'settings_password_update'])->name('settings-password');
             Route::post('availability/{id}', [AstrologerController::class,'availability'])->name('availability');
         });
-        Route::get('/dashboard', [AstrologerController::class, 'dashboard'])->name('dashboard');
+        Route::post('/save-chat', 'ChatController@savechat');
+        Route::post('/load-chats', 'ChatController@loadchats');
+        Route::get('chat', 'ChatController@chat')->name('chat');
+
         Route::group(['prefix' => 'chat', 'as' => 'chat.'], function () {
             Route::get('chat-requests', 'ChatController@chat_requests')->name('chat-requests');
             Route::get('accept-chat-request/{id}', 'ChatController@accept_chat_request')->name('accept-chat-request'); // Show create item form

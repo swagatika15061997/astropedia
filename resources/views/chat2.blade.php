@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>User Panel</title>
+    <title>Document</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     <style>
@@ -19,40 +19,34 @@
             margin: 10px;
             color: #000;
         }
-        .offline-status {
-            color: red;
-        }
-        .online-status {
-            color: green;
-        }
     </style>
 </head>
 <body>
     @php
-        $astrologers = App\Models\Astrologer::all();
+        $users = App\Models\User::whereNotIn('id', [auth()->user()->id])->get();
     @endphp
     <div class="row">
         <div class="col-4">
-            @if (count($astrologers) > 0)
+            @if (count($users) > 0)
                 <div class="list-group" id="list-tab" role="tablist">
-                    @foreach ($astrologers as $astrologer)
-                        <a class="list-group-item list-group-item-action user-list-item" id="astrologer-{{ $astrologer->id }}-list" data-id="astro_{{ $astrologer->id }}" data-type="astrologer" data-bs-toggle="list" href="#list-{{ $astrologer->id }}" role="tab" aria-controls="list-profile">{{ $astrologer->name }}
-                            <b><sup id="astrologer-{{ $astrologer->id }}-status" class="offline-status">Offline</sup></b>
+                    @foreach ($users as $user)
+                        <a class="list-group-item list-group-item-action user-list-item" id="list-profile-list" data-id="{{ $user->id }}" data-bs-toggle="list" href="#list-{{ $user->id }}" role="tab" aria-controls="list-profile">{{ $user->name }}
+                            <b><sup id="{{ $user->id }}-status" class="offline-status">Offline</sup></b>
                         </a>
                     @endforeach
                 </div>
             @else
-                <p>No astrologer found</p>
+                <p>No user found</p>
             @endif
         </div>
         <div class="col-8">
             <div class="tab-content" id="nav-tabContent">
-                @foreach ($astrologers as $astrologer)
-                    <div class="tab-pane fade" id="list-{{ $astrologer->id }}" role="tabpanel" aria-labelledby="astrologer-{{ $astrologer->id }}-list">
-                        <div id="chat-container-{{ $astrologer->id }}" class="chat-container">
+                @foreach ($users as $user)
+                    <div class="tab-pane fade" id="list-{{ $user->id }}" role="tabpanel" aria-labelledby="list-profile-list">
+                        <div id="chat-container-{{ $user->id }}" class="chat-container">
                             <!-- Previous chat messages will be loaded here -->
                         </div>
-                        <form class="chat-form" data-id="{{ $astrologer->id }}" data-type="astrologer" method="post">
+                        <form class="chat-form" data-id="{{ $user->id }}" method="post">
                             <input type="text" name="message" placeholder="Enter Message" class="message-input border" required>
                             <button type="submit" class="btn btn-warning">Send Message</button>
                         </form>
@@ -64,9 +58,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script>
-        var user_id = @json(auth()->user()->id);
-        var astrologer_id;
-
+        var sender_id = @json(auth()->user()->id);
+        var receiver_id;
+        
         $.ajaxSetup({
             headers: {
                 'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
@@ -76,12 +70,11 @@
         $(document).ready(function() {
             $('.user-list-item').click(function() {
                 var getUserId = $(this).attr('data-id');
-                var getUserType = $(this).attr('data-type');
-                astrologer_id = getUserId;
-                console.log(astrologer_id);
+                receiver_id = getUserId;
+                console.log(receiver_id);
 
                 // Clear chat container for the selected user
-                $('#chat-container-' + astrologer_id).html('');
+                $('#chat-container-' + receiver_id).html('');
                 loadOldChats();
             });
 
@@ -94,8 +87,8 @@
                     url: "/save-chat",
                     type: "POST",
                     data: {
-                        user_id: user_id,
-                        astrologer_id: astrologer_id,
+                        sender_id: sender_id,
+                        receiver_id: receiver_id,
                         message: message,
                         _token: $('meta[name="csrf-token"]').attr('content')
                     },
@@ -106,7 +99,7 @@
                             let html = `<div class="current-user-chat">
                                             <h5>` + chat + `</h5>
                                         </div>`;
-                            $('#chat-container-' + astrologer_id).append(html);
+                            $('#chat-container-' + receiver_id).append(html);
                         } else {
                             alert(res.msg);
                         }
@@ -119,14 +112,14 @@
             $.ajax({
                 url:"/load-chats",
                 type:"POST",
-                data:{ user_id: user_id, astrologer_id: astrologer_id},
+                data:{ sender_id: sender_id, receiver_id: receiver_id},
                 success:function(res){
                     if(res.success){
                         let chats = res.data;
                         let html = '';
                         for(let i=0; i < chats.length; i++){
                             let addClass = '';
-                            if(chats[i].user_id == user_id){
+                            if(chats[i].sender_id == sender_id){
                                 addClass = 'current-user-chat';
                             }  
                             else{
@@ -137,7 +130,7 @@
                                 <h5>`+chats[i].message+`</h5>
                             </div>`;
                         }
-                        $('#chat-container-' + astrologer_id).append(html);
+                        $('#chat-container-' + receiver_id).append(html);
                     }
                     else{
                         alert(res.msg);
@@ -145,43 +138,40 @@
                 }
             });
         }
-
-
+        
         document.addEventListener('DOMContentLoaded', function() {
             Echo.join('status-update')
                 .here((users) => {
                     for (let x = 0; x < users.length; x++) {
-                        
-                        if (user_id != users[x]['id']) {
-                            console.log(users[x]['type']);
-                            $('#astrologer-' + users[x]['id'] + '-status').removeClass('offline-status');
-                            $('#astrologer-' + users[x]['id'] + '-status').addClass('online-status');
-                            $('#astrologer-' + users[x]['id'] + '-status').text('Online');
+                        if (sender_id != users[x]['id']) {
+                            $('#' + users[x]['id'] + '-status').removeClass('offline-status');
+                            $('#' + users[x]['id'] + '-status').addClass('online-status');
+                            $('#' + users[x]['id'] + '-status').text('Online');
                         }
                     }
                 })
                 .joining((user) => {
-                    $('#astrologer-' + user.id + '-status').removeClass('offline-status');
-                    $('#astrologer-' + user.id + '-status').addClass('online-status');
-                    $('#astrologer-' + user.id + '-status').text('Online');
+                    $('#' + user.id + '-status').removeClass('offline-status');
+                    $('#' + user.id + '-status').addClass('online-status');
+                    $('#' + user.id + '-status').text('Online');
                 })
                 .leaving((user) => {
-                    $('#astrologer-' + user.id + '-status').removeClass('online-status');
-                    $('#astrologer-' + user.id + '-status').addClass('offline-status');
-                    $('#astrologer-' + user.id + '-status').text('Offline');
+                    $('#' + user.id + '-status').removeClass('online-status');
+                    $('#' + user.id + '-status').addClass('offline-status');
+                    $('#' + user.id + '-status').text('Offline');
                 })
                 .listen('UserStatusEvent', (e) => {
-                    console.log('UserStatusEvent', e);
+                    console.log('hhh' + e);
                 });
 
             Echo.private('broadcast-message')
                 .listen('.getChatMessage', (data) => {
                     console.log(data);
-                    if (user_id == data.chat.astrologer_id && astrologer_id == data.chat.user_id) {
+                    if (sender_id == data.chat.receiver_id && receiver_id == data.chat.sender_id) {
                         let html = `<div class="distance-user-chat">
                                         <h5>` + data.chat.message + `</h5>
                                     </div>`;
-                        $('#chat-container-' + astrologer_id).append(html);
+                        $('#chat-container-' + receiver_id).append(html);
                     }
                 });
         });
